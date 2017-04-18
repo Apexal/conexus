@@ -26,11 +26,12 @@ TEXT_PERMS.can_send_messages = true
 
 bot = Discordrb::Bot.new token: ARGV.first, client_id: ARGV[1] 
 
-bot.ready { bot.servers.each { |_, server| setup_server(server) } }
+bot.ready { |event| bot.servers.each { |_, server| setup_server(server) } }
 
-bot.server_create { |event| setup_server(event.server) }
+bot.server_create { |event| event.server.member(event.bot.profile.id).nick = "🔗"; setup_server(event.server) }
 
 def setup_server(server)
+  
   puts "Setting up [#{server.name}]"
   puts 'Trimming associations'
   trim_associations(server)
@@ -135,8 +136,8 @@ end
 
 #bot.invisible
 puts "Oauth url: #{bot.invite_url}+&permissions=8"
-bot.run :async
 
-bot.name = 'Conexus'
-bot.invisible
+bot.run :async
+bot.dnd
+bot.profile.name = 'conexus'
 bot.sync
