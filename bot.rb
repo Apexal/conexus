@@ -11,6 +11,7 @@ require 'discordrb'
 #   "267526886454722560": "295714345344565249",
 #   etc.
 # }
+File.open('associations.yaml', 'w') {}
 ASSOCIATIONS = YAML.load_file('associations.yaml')
 ASSOCIATIONS ||= Hash.new
 
@@ -30,7 +31,9 @@ bot.server_create { |event| setup_server(event.server) }
 
 def setup_server(server)
   puts "Setting up [#{server.name}]"
+  puts 'Trimming associations'
   trim_associations(server)
+  puts 'Cleaning up after restart'
   server.text_channels.select { |tc| tc.name == 'voice-channel' }.each do |tc|
     return tc.delete unless ASSOCIATIONS.values.include?(tc.id)
     vc = server.voice_channels.find { |vc| vc.id == ASSOCIATIONS.key(tc) }
@@ -38,8 +41,10 @@ def setup_server(server)
       tc.define_overwrite(u, 0, 0)
     end
   end
+  puts 'Associating'
   server.voice_channels.each { |vc| associate(vc) }
   OLD_VOICE_STATES[server.id] = server.voice_states.clone
+  puts "Done\n"
 end
 
 def simplify_voice_states(voice_states)
