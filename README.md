@@ -1,5 +1,5 @@
 # Conexus 🔗
-~ A simple Discord bot to link private test channels to voice channels.
+~ A simple Discord bot to link voice channels to private text channels.
 
 ## Uses
 - Provides a place for messages only pertaining to the people in a voice-channel (so you don't clutter #general or some place and confuse people)
