@@ -3,6 +3,7 @@ if ARGV.length != 2
   exit
 end
 
+require 'fileutils'
 require 'yaml'
 require 'discordrb'
 
@@ -11,7 +12,7 @@ require 'discordrb'
 #   "267526886454722560": "295714345344565249",
 #   etc.
 # }
-File.open('associations.yaml', 'w') {}
+FileUtils.touch('associations.yaml')
 ASSOCIATIONS = YAML.load_file('associations.yaml')
 ASSOCIATIONS ||= Hash.new
 
@@ -35,7 +36,10 @@ def setup_server(server)
   trim_associations(server)
   puts 'Cleaning up after restart'
   server.text_channels.select { |tc| tc.name == 'voice-channel' }.each do |tc|
-    return tc.delete unless ASSOCIATIONS.values.include?(tc.id)
+    unless ASSOCIATIONS.values.include?(tc.id)
+      tc.delete
+      next
+    end
     vc = server.voice_channels.find { |vc| vc.id == ASSOCIATIONS.key(tc) }
     tc.users.select { |u| !vc.users.include?(u) }.each do |u|
       tc.define_overwrite(u, 0, 0)
@@ -129,5 +133,10 @@ def save
   File.open('associations.yaml', 'w') {|f| f.write ASSOCIATIONS.to_yaml }
 end
 
+#bot.invisible
 puts "Oauth url: #{bot.invite_url}+&permissions=8"
-bot.run
+bot.run :async
+
+bot.name = 'Conexus'
+bot.invisible
+bot.sync
