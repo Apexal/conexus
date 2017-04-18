@@ -11,6 +11,7 @@ require 'discordrb'
 #   etc.
 # }
 ASSOCIATIONS = Hash.new
+OLD_VOICE_STATES = Hash.new
 
 NEW_ROOM_NAME = '[New Room]'
 
@@ -21,6 +22,7 @@ bot.ready do
     puts "Setting up [#{server.name}]"
     server.text_channels.select { |vc| vc.name == 'voice-channel' }.map(&:delete) # Remove previous text voice-channel's that are abandoned
     server.voice_channels.each { |vc| associate(server, vc) }
+    OLD_VOICE_STATES[server_id] = server.voice_states.clone
   end
 end
 
@@ -39,6 +41,10 @@ def associate(server, voice_channel)
   end
 
   nil
+end
+
+def handle_user_change(voice_channel, user)
+
 end
 
 # VOICE-CHANNEL CREATED
@@ -61,6 +67,21 @@ end
 # TEXT-CHANNEL DELETED
 bot.channel_delete(type: 0) do |event|
   #puts "bye bye tc"
+end
+
+bot.voice_state_update do |event|
+  old = OLD_VOICE_STATES[event.server.id]
+
+  if event.server.voice_states != old
+    # Something has happened
+
+    #puts "I sense a change"
+
+    handle_user_change(event.old_channel, event.user) unless event.old_channel.nil?
+    handle_user_change(event.channel, event.user)
+  end
+
+  OLD_VOICE_STATES[event.server.id] = event.server.voice_states.clone
 end
 
 bot.run
