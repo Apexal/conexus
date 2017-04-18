@@ -19,17 +19,11 @@ TEXT_PERMS.can_read_message_history = true
 TEXT_PERMS.can_read_messages = true
 TEXT_PERMS.can_send_messages = true
 
-NEW_ROOM_NAME = '[New Room]'
-
 bot = Discordrb::Bot.new token: ARGV.first, client_id: ARGV[1] 
 
-bot.ready do
-  bot.servers.each { |_, server| setup_server(server) }
-end
+bot.ready { bot.servers.each { |_, server| setup_server(server) } }
 
-bot.server_create do |event|
-  setup_server(event.server)
-end
+bot.server_create { |event| setup_server(event.server) }
 
 def setup_server(server)
   puts "Setting up [#{server.name}]"
@@ -56,8 +50,11 @@ def associate(voice_channel)
     text_channel = server.create_channel('voice-channel', 0) # Creates a matching text-channel called 'voice-channel'
     text_channel.topic = "Private chat for all those in the voice-channel [**#{voice_channel.name}**]."
     
-    text_channel.define_overwrite(voice_channel.server.roles.find { |r| r.id == voice_channel.server.id }, 0, TEXT_PERMS) # Set default perms as invisible
+    voice_channel.users.each do |u|
+      text_channel.define_overwrite(u, TEXT_PERMS, 0)
+    end
 
+    text_channel.define_overwrite(voice_channel.server.roles.find { |r| r.id == voice_channel.server.id }, 0, TEXT_PERMS) # Set default perms as invisible
     ASSOCIATIONS[voice_channel.id] = text_channel.id # Associate the two 
   end
 
@@ -81,24 +78,13 @@ def handle_user_change(action, voice_channel, user)
 end
 
 # VOICE-CHANNEL CREATED
-bot.channel_create(type: 2, name: not!(NEW_ROOM_NAME)) do |event|
+bot.channel_create(type: 2) do |event|
   associate(event.channel)
-  #event.server.create_channel(NEW_ROOM_NAME, 2)
 end
 
 # VOICE-CHANNEL DELETED
-bot.channel_delete(type: 2, name: not!(NEW_ROOM_NAME)) do |event|
+bot.channel_delete(type: 2) do |event|
   event.server.text_channels.select { |tc| tc.id == ASSOCIATIONS[event.id] }.map(&:delete)
-end
-
-# TEXT-CHANNEL CREATED
-bot.channel_create(type: 0) do |event|
-  #puts "new tc"
-end
-
-# TEXT-CHANNEL DELETED
-bot.channel_delete(type: 0) do |event|
-  #puts "bye bye tc"
 end
 
 bot.voice_state_update do |event|
