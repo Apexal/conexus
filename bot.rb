@@ -56,6 +56,8 @@ def associate(voice_channel)
     text_channel = server.create_channel('voice-channel', 0) # Creates a matching text-channel called 'voice-channel'
     text_channel.topic = "Private chat for all those in the voice-channel [**#{voice_channel.name}**]."
     
+    text_channel.define_overwrite(voice_channel.server.roles.find { |r| r.id == voice_channel.server.id }, 0, TEXT_PERMS) # Set default perms as invisible
+
     ASSOCIATIONS[voice_channel.id] = text_channel.id # Associate the two 
   end
 
@@ -71,8 +73,10 @@ def handle_user_change(action, voice_channel, user)
 
   if action == :join
     text_channel.send_message("**#{user.display_name}** joined the voice-channel.")
+    text_channel.define_overwrite(user, TEXT_PERMS, 0)
   else
     text_channel.send_message("**#{user.display_name}** left the voice-channel.")
+    text_channel.define_overwrite(user, 0, 0)
   end
 end
 
