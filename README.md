@@ -11,8 +11,9 @@ This bot creates a hidden text-channel named `voice-channel` for every non-AFK v
 ## Add to Server
 [https://discordapp.com/oauth2/authorize?&client_id=304009832489287691&scope=bot+&permissions=8](https://discordapp.com/oauth2/authorize?&client_id=304009832489287691&scope=bot+&permissions=8)
 
+or
 
-## Run
+## Run Yourself (Recommended)
 To run the program yourself, just clone it and run the following:
 ```sh
 $ git clone git@github.com:Apexal/conexus.git && cd conexus
