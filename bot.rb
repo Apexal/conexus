@@ -24,12 +24,18 @@ NEW_ROOM_NAME = '[New Room]'
 bot = Discordrb::Bot.new token: ARGV.first, client_id: ARGV[1] 
 
 bot.ready do
-  bot.servers.each do |server_id, server|
-    puts "Setting up [#{server.name}]"
-    server.text_channels.select { |vc| vc.name == 'voice-channel' }.map(&:delete) # Remove previous text voice-channel's that are abandoned
-    server.voice_channels.each { |vc| associate(vc) }
-    OLD_VOICE_STATES[server_id] = server.voice_states.clone
-  end
+  bot.servers.each { |_, server| setup_server(server) }
+end
+
+bot.server_create do |event|
+  setup_server(event.server)
+end
+
+def setup_server(server)
+  puts "Setting up [#{server.name}]"
+  server.text_channels.select { |vc| vc.name == 'voice-channel' }.map(&:delete) # Remove previous text voice-channel's that are abandoned
+  server.voice_channels.each { |vc| associate(vc) }
+  OLD_VOICE_STATES[server.id] = server.voice_states.clone
 end
 
 def simplify_voice_states(voice_states)
