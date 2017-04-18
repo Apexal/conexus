@@ -14,6 +14,8 @@ This bot creates a hidden text-channel named `voice-channel` for every non-AFK v
 
 ## Run
 To run the program yourself, just clone it and run the following:
-`$ git clone git@github.com:Apexal/conexus.git && cd conexus'`
-`$ bundle`
-`$ ruby run.rb <token> <client-id>`
+```sh
+$ git clone git@github.com:Apexal/conexus.git && cd conexus
+$ bundle
+$ ruby run.rb <token> <client-id>
+```
