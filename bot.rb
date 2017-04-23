@@ -34,7 +34,7 @@ TEXT_PERMS.can_read_message_history = true
 TEXT_PERMS.can_read_messages = true
 TEXT_PERMS.can_send_messages = true
 
-BOT = Discordrb::Commands::CommandBot.new token: ARGV.first, client_id: ARGV[1], prefix: '!'
+BOT = Discordrb::Commands::CommandBot.new token: ARGV.first, client_id: ARGV[1], prefix: '!', advanced_functionality: true
 
 BOT.ready { |event| BOT.servers.each { |_, server| setup_server(server) }; BOT.set_user_permission(152621041976344577, 3) }
 
@@ -59,10 +59,9 @@ def setup_server(server)
       tc.define_overwrite(u, 0, 0)
     end
   end
-  #puts 'Associating'
-  #puts ASSOCIATIONS
+
   server.voice_channels.each { |vc| associate(vc) }
-  #puts ASSOCIATIONS
+
   OLD_VOICE_STATES[server.id] = server.voice_states.clone
   BOT.set_user_permission(server.owner.id, 2)
   puts "Done\n"
@@ -157,7 +156,7 @@ BOT.command(:conexus, description: 'Set the name of the text-channels created fo
   new_name.downcase!
   new_name.strip!
   new_name.gsub!(/\s+/, '-')
-  new_name.gsub!(/[^\p{Alnum}-]/, '')
+  new_name.gsub!(/[^a-zA-Z0-9_-]/, '')
   new_name = new_name[0..30]
 
   # Make sure channel doesn't already exist
@@ -174,6 +173,27 @@ BOT.command(:conexus, description: 'Set the name of the text-channels created fo
 
   event.user.pm "Set text-channel name to `##{new_name}`."
   nil
+end
+
+BOT.command(:rename, description: 'Set the name of **ONE** text-channel created for a voice-channel.', usage: '`!rename "new-name"` in the special text-channel you want to rename', min_args: 1, max_args: 1, permission_level: 2) do |event, new_name|
+  new_name.downcase!
+  new_name.strip!
+  new_name.gsub!(/\s+/, '-')
+  new_name.gsub!(/[^a-zA-Z0-9_-]/, '')
+  new_name = new_name[0..30]
+
+  ids = ASSOCIATIONS.values
+
+  # Make sure channel doesn't already exist
+  return event.user.pm "Invalid name! `##{new_name}` is already used on the server." unless event.server.text_channels.find { |tc| tc.name == new_name && !ids.include?(tc.id) }.nil?
+
+  # Make sure is associated channel
+  return event.channel.send_message('You must use this in the special text-channel!') unless ids.include?(event.channel.id)
+
+  # Rename all the old channels to the new name
+  event.channel.name = new_name
+
+  'Renamed channel!'
 end
 
 def save
