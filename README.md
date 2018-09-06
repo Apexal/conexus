@@ -14,7 +14,7 @@ This bot creates a hidden text-channel named `voice-channel` for every non-AFK v
 - `!rename "new-name"` Set's the name of **one** associated text-channel (you must use the command in that channel)
 
 ## Add to Server
-[https://discordapp.com/oauth2/authorize?&client_id=304009832489287691&scope=bot+&permissions=8](https://discordapp.com/oauth2/authorize?&client_id=304009832489287691&scope=bot+&permissions=8)
+[https://discordapp.com/oauth2/authorize?&client_id=304009832489287691&scope=bot&permissions=8](https://discordapp.com/oauth2/authorize?&client_id=304009832489287691&scope=bot&permissions=8)
 
 or
 
