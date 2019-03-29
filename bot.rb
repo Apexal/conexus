@@ -63,7 +63,7 @@ end
 def associated_channel(voice_channel)
     category = voice_channel.server.channels.find { |c| c.type == 4 && c.name == 'Current Voice Channel' }
 
-    text_channel = voice_channel.server.text_channels.find { |c| !c.topic.nil? && c.topic.split(" | ").last.resolve_id == voice_channel.id }
+    text_channel = voice_channel.server.text_channels.find { |c| !c.topic.nil? && !c.topic.split(" | ").empty? && c.topic.split(" | ").last.resolve_id == voice_channel.id }
     if text_channel.nil?
         text_channel = voice_channel.server.create_channel(voice_channel.name, 0, parent: category, topic: "🔗 Discussion room for the voice channel #{voice_channel.name}. | *Please do not edit this channel topic.* | #{voice_channel.id}")
         text_channel.send_message("This is an automated discussion room for the voice channel **#{voice_channel.name}**.")
