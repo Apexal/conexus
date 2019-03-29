@@ -51,3 +51,5 @@ build-iPhoneSimulator/
 
 associations.yaml
 server_namings.yaml
+
+.env

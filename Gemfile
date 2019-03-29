@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-gem "discordrb"
-gem "pry"
+gem 'discordrb'
+gem 'dotenv'
+gem 'pry'
