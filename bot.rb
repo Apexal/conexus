@@ -15,15 +15,19 @@ end
 
 BOT = Discordrb::Commands::CommandBot.new token: ENV['DISCORD_BOT_TOKEN'], client_id: ENV['DISCORD_CLIENT_ID'], prefix: ENV['DISCORD_COMMAND_PREFIX']
 
+def log(server, message)
+    puts "#{DateTime.now} [#{server.name}] #{message}"
+end
+
 def create_category(server)
     category = server.channels.find { |c| c.name == 'Current Voice Channel'}
     
     if category.nil?
         category = server.create_channel('Current Voice Channel', 4, reason: "To hold text channels for each voice channel. DO NOT TOUCH")
         category.define_overwrite(server.id, 0, CATEGORY_PERMS)
-        puts "'Current Voice Channel' category created on server #{server.name}"
+        log(server, "'Current Voice Channel' category created")
     else
-        puts "'Current Voice Channel' category already exists on server #{server.name}"
+        log(server, "'Current Voice Channel' category already exists")
     end
 
     category
@@ -50,6 +54,12 @@ BOT.channel_create(type: 2) do |event|
     associated_channel(event.channel)
 end
 
+BOT.channel_delete(type: 2) do |event|
+    text_channel = associated_channel(event)
+    text_channel.delete
+    log(event.server, "Deleted text channel for voice channel \"#{text_channel.name}\"")
+end
+
 def associated_channel(voice_channel)
     category = voice_channel.server.channels.find { |c| c.type == 4 && c.name == 'Current Voice Channel' }
 
@@ -57,19 +67,20 @@ def associated_channel(voice_channel)
     if text_channel.nil?
         text_channel = voice_channel.server.create_channel(voice_channel.name, 0, parent: category, topic: "🔗 Discussion room for the voice channel #{voice_channel.name}. | *Please do not edit this channel topic.* | #{voice_channel.id}")
         text_channel.send_message("This is an automated discussion room for the voice channel **#{voice_channel.name}**.")
+        log(voice_channel.server, "Created text channel for voice channel \"#{voice_channel.name}\"")
     end
     text_channel
 end
 
 def member_joined_voice_channel(member, voice_channel)
-    puts "#{member.display_name} joined voice channel \"#{voice_channel.name}\""
+    log(member.server, "#{member.display_name} joined voice channel \"#{voice_channel.name}\"")
 
     text_channel = associated_channel(voice_channel)
     text_channel.define_overwrite(member, CATEGORY_PERMS, 0)
 end
 
 def member_left_voice_channel(member, voice_channel)
-    puts "#{member.display_name} left voice channel \"#{voice_channel.name}\""
+    log(member.server, "#{member.display_name} left voice channel \"#{voice_channel.name}\"")
 
     text_channel = associated_channel(voice_channel)
     text_channel.delete_overwrite(member)
