@@ -1,11 +1,29 @@
 AllCops:
   TargetRubyVersion: 2.6
 
+# It's very common to do this.
+#
+# f.input :thing,
+#   key: value,
+#   this: that
+Layout/ArgumentAlignment:
+  Enabled: false
+
 Layout/EmptyLinesAroundAccessModifier:
   EnforcedStyle: 'around'
 
 Layout/CaseIndentation:
   EnforcedStyle: 'end'
+
+# Makes the "block" of modified methods obvious. We prefer inline modifiers.
+Layout/IndentationConsistency:
+  EnforcedStyle: 'indented_internal_methods'
+
+Layout/MultilineArrayBraceLayout:
+  EnforcedStyle: 'new_line'
+
+Layout/MultilineMethodCallBraceLayout:
+  EnforcedStyle: 'new_line'
 
 # We have widescreens.
 Layout/LineLength:
@@ -33,6 +51,10 @@ Lint/StructNewOverride:
 # Has no effect on anything.
 Layout/TrailingWhitespace:
   Enabled: false
+
+Metrics/MethodLength:
+  # The default of 10 is too tight.
+  Max: 30
 
 Style/ExponentialNotation:
   Enabled: true

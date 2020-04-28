@@ -69,7 +69,13 @@ def run
     nil
   end
 
-  @bot.command(:conexus, description: 'Set the name of the text-channels created for each voice-channel.', usage: '`!conexus "new-name"`', min_args: 1, max_args: 1, permission_level: 2) do |event, new_name|
+  @bot.command(:conexus,
+    description: 'Set the name of the text-channels created for each voice-channel.',
+    usage: '`!conexus "new-name"`',
+    min_args: 1,
+    max_args: 1,
+    permission_level: 2
+  ) do |event, new_name|
     new_name.downcase!
     new_name.strip!
     new_name.gsub!(/\s+/, '-')
@@ -94,7 +100,13 @@ def run
     nil
   end
 
-  @bot.command(:rename, description: 'Set the name of **ONE** text-channel created for a voice-channel.', usage: '`!rename "new-name"` in the special text-channel you want to rename', min_args: 1, max_args: 1, permission_level: 2) do |event, new_name|
+  @bot.command(:rename,
+    description: 'Set the name of **ONE** text-channel created for a voice-channel.',
+    usage: '`!rename "new-name"` in the special text-channel you want to rename',
+    min_args: 1,
+    max_args: 1,
+    permission_level: 2
+  ) do |event, new_name|
     new_name.downcase!
     new_name.strip!
     new_name.gsub!(/\s+/, '-')
@@ -158,8 +170,8 @@ def setup_server(server)
       tc.delete
       next
     end
-    vc = server.voice_channels.find { |vc| vc.id == @associations.key(tc) }
-    tc.users.reject { |u| vc.users.include?(u) }.each do |u|
+    voice_channel = server.voice_channels.find { |vc| vc.id == @associations.key(tc) }
+    tc.users.reject { |u| voice_channel.users.include?(u) }.each do |u|
       tc.define_overwrite(u, 0, 0)
     end
   end
@@ -190,9 +202,9 @@ end
 
 def associate(voice_channel)
   server = voice_channel.server
-  if voice_channel == server.afk_channel
-    return
-  end # No need for AFK channel to have associated text-channel
+
+  # No need for AFK channel to have associated text-channel
+  return if voice_channel == server.afk_channel
 
   puts "Associating '#{voice_channel.name} / #{server.name}'"
   text_channel = server.text_channels.find { |tc| tc.id == @associations[voice_channel.id] }
@@ -200,15 +212,19 @@ def associate(voice_channel)
   if text_channel.nil?
     puts "Not found... creating..."
     @server_namings[server.id] = default_text_channel_name(voice_channel.name)
-    text_channel = server.create_channel(@server_namings[server.id], 0) # Creates a matching text-channel called 'voice-channel'
-    text_channel.topic = "Private chat for all those in the voice-channel [**#{voice_channel.name}**]."
+    # Creates a matching text-channel called 'voice-channel'
+    text_channel = server.create_channel(@server_namings[server.id], 0)
+    text_channel.topic = "Private chat for all in [**#{voice_channel.name}**]."
     
     voice_channel.users.each do |u|
       text_channel.define_overwrite(u, @text_perms, 0)
     end
 
-    text_channel.define_overwrite(voice_channel.server.roles.find { |r| r.id == voice_channel.server.id }, 0, @text_perms) # Set default perms as invisible
-    @associations[voice_channel.id] = text_channel.id # Associate the two 
+    # Set default perms as invisible
+    text_channel.define_overwrite(
+      voice_channel.server.roles.find { |r| r.id == voice_channel.server.id }, 0, @text_perms
+    )
+    @associations[voice_channel.id] = text_channel.id
     save_local_files
   end
 
@@ -217,7 +233,8 @@ end
 
 def handle_user_change(action, voice_channel, user)
   puts "Handling user #{action} for '#{voice_channel.name} / #{voice_channel.server.name}' for #{user.distinct}"
-  text_channel = associate(voice_channel) # This will create it if it doesn't exist. Pretty cool!
+  # This will create it if it doesn't exist.
+  text_channel = associate(voice_channel)
 
   # For whatever reason, maybe is AFK channel
   return if text_channel.nil?
