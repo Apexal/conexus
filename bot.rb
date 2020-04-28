@@ -1,4 +1,4 @@
-SCHWERN_UID = 288032693164310528
+SCHWERN_UID = 288_032_693_164_310_528
 
 if ARGV.length != 2
   puts 'Usage: ruby bot.rb <token> <client_id>'
@@ -23,14 +23,16 @@ OWNER_PM_MESSAGE = <<~MESSAGE.freeze
 MESSAGE
 
 def run
-  @bot = Discordrb::Commands::CommandBot.new token: ARGV.first, client_id: ARGV[1], prefix: '!', advanced_functionality: true
+  @bot = Discordrb::Commands::CommandBot.new(
+    token: ARGV.first, client_id: ARGV[1], prefix: '!', advanced_functionality: true
+  )
 
-  @bot.ready { |_|
-    @bot.servers.each { |_, server|
+  @bot.ready do |_|
+    @bot.servers.each do |_, server|
       setup_server(server)
-    }
+    end
     @bot.set_user_permission(SCHWERN_UID, 3)
-  }
+  end
 
   @bot.server_create do |event| 
     event.server.member(event.BOT.profile.id).nick = "🔗"
@@ -50,11 +52,11 @@ def run
   end
 
   @bot.voice_state_update do |event|
-    #old = simplify_voice_states(OLD_VOICE_STATES[event.server.id])
-    #current = simplify_voice_states(event.server.voice_states)
+    # old = simplify_voice_states(OLD_VOICE_STATES[event.server.id])
+    # current = simplify_voice_states(event.server.voice_states)
     member = event.user.on(event.server)
 
-    if event.old_channel != event.channel #current[member.id] != old[member.id]
+    if event.old_channel != event.channel # current[member.id] != old[member.id]
       # Something has happened
       handle_user_change(:leave, event.old_channel, member) unless event.old_channel.nil?
       handle_user_change(:join, event.channel, member) unless event.channel.nil?
@@ -75,7 +77,9 @@ def run
     new_name = new_name[0..30]
 
     # Make sure channel doesn't already exist
-    return event.user.pm "Invalid name! `##{new_name}` is already used on the server." unless event.server.text_channels.find { |tc| tc.name == new_name }.nil?
+    unless event.server.text_channels.find { |tc| tc.name == new_name }.nil?
+      return event.user.pm "Invalid name! `##{new_name}` is already used on the server."
+    end
 
     old_name = @server_namings[event.server]
     @server_namings[event.server.id] = new_name
@@ -100,10 +104,14 @@ def run
     ids = @associations.values
 
     # Make sure channel doesn't already exist
-    return event.user.pm "Invalid name! `##{new_name}` is already used on the server." unless event.server.text_channels.find { |tc| tc.name == new_name && !ids.include?(tc.id) }.nil?
+    unless event.server.text_channels.find { |tc| tc.name == new_name && !ids.include?(tc.id) }.nil?
+      return event.user.pm "Invalid name! `##{new_name}` is already used on the server."
+    end
 
     # Make sure is associated channel
-    return event.channel.send_message('You must use this in the special text-channel!') unless ids.include?(event.channel.id)
+    unless ids.include?(event.channel.id)
+      return event.channel.send_message('You must use this in the special text-channel!')
+    end
 
     # Rename all the old channels to the new name
     event.channel.name = new_name
@@ -111,7 +119,7 @@ def run
     'Renamed channel!'
   end
   
-  #BOT.invisible
+  # BOT.invisible
   puts "Oauth url: #{@bot.invite_url}+&permissions=8"
 
   @bot.run :async
@@ -151,7 +159,7 @@ def setup_server(server)
       next
     end
     vc = server.voice_channels.find { |vc| vc.id == @associations.key(tc) }
-    tc.users.select { |u| !vc.users.include?(u) }.each do |u|
+    tc.users.reject { |u| vc.users.include?(u) }.each do |u|
       tc.define_overwrite(u, 0, 0)
     end
   end
@@ -170,7 +178,7 @@ def simplify_voice_states(voice_states)
 end
 
 def trim_associations
-  ids = @bot.servers.map { |_, s| s.voice_channels.map { |vc| vc.id } }.flatten
+  ids = @bot.servers.map { |_, s| s.voice_channels.map(&:id) }.flatten
   @associations.delete_if { |vc_id, _| !ids.include?(vc_id) }
 
   save_local_files
@@ -182,7 +190,9 @@ end
 
 def associate(voice_channel)
   server = voice_channel.server
-  return if voice_channel == server.afk_channel # No need for AFK channel to have associated text-channel
+  if voice_channel == server.afk_channel
+    return
+  end # No need for AFK channel to have associated text-channel
 
   puts "Associating '#{voice_channel.name} / #{server.name}'"
   text_channel = server.text_channels.find { |tc| tc.id == @associations[voice_channel.id] }

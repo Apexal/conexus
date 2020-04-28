@@ -7,6 +7,13 @@ Layout/EmptyLinesAroundAccessModifier:
 Layout/CaseIndentation:
   EnforcedStyle: 'end'
 
+# We have widescreens.
+Layout/LineLength:
+  Max: 100
+
+Layout/SpaceAroundMethodCallOperator:
+  Enabled: true
+
 # Useful to separate conceptual expressions.
 Layout/SpaceInsideParens:
   Enabled: false
@@ -17,13 +24,31 @@ Layout/SpaceInsideHashLiteralBraces:
 Layout/TrailingEmptyLines:
   Enabled: false
 
+Lint/RaiseException:
+  Enabled: true
+
+Lint/StructNewOverride:
+  Enabled: true
+
 # Has no effect on anything.
 Layout/TrailingWhitespace:
   Enabled: false
 
+Style/ExponentialNotation:
+  Enabled: true
+
 # Turn this on if we upgrade to Ruby 3.0.
 Style/FrozenStringLiteralComment:
   Enabled: false
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
 
 # These are handy for clarity over large text blocks, not just for
 # avoiding escaping quotes.
