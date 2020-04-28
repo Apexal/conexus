@@ -10,6 +10,9 @@
 /test/version_tmp/
 /tmp/
 
+# Ignore local data files.
+local/
+
 # Used by dotenv library to load environment variables.
 # .env
 
@@ -48,6 +51,3 @@ build-iPhoneSimulator/
 
 # unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
 .rvmrc
-
-associations.yaml
-server_namings.yaml

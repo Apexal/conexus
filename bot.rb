@@ -1,3 +1,5 @@
+SCHWERN_UID = 288032693164310528
+
 if ARGV.length != 2
   puts 'Usage: ruby bot.rb <token> <client_id>'
   exit
@@ -12,49 +14,143 @@ require 'yaml'
 require 'discordrb'
 require 'pry'
 
-# This hash will store voice channel_ids mapped to text_channel ids
-# {
-#   "267526886454722560": "295714345344565249",
-#   etc.
-# }
-FileUtils.touch('associations.yaml')
-ASSOCIATIONS = YAML.load_file('associations.yaml')
-ASSOCIATIONS ||= Hash.new
+ASSOCIATIONS_FILE = 'local/associations.yaml'.freeze
+SERVER_NAMINGS_FILE = 'local/server_namings.yaml'.freeze
 
-FileUtils.touch('server_namings.yaml')
-SERVER_NAMINGS = YAML.load_file('server_namings.yaml')
-SERVER_NAMINGS ||= Hash.new
-SERVER_NAMINGS.default = 'voice-channel'
+OWNER_PM_MESSAGE = <<~MESSAGE.freeze
+  Thank you for using **Conexus**!
+  To change the name of associated text-channels, type **IN THE SERVER**: `set-name 'new-name-here'`
+MESSAGE
 
-OLD_VOICE_STATES = Hash.new
+def run
+  @bot = Discordrb::Commands::CommandBot.new token: ARGV.first, client_id: ARGV[1], prefix: '!', advanced_functionality: true
 
-# These are the perms given to people for a associated voice-channel
-TEXT_PERMS = Discordrb::Permissions.new
-TEXT_PERMS.can_read_message_history = true
-TEXT_PERMS.can_read_messages = true
-TEXT_PERMS.can_send_messages = true
+  @bot.ready { |_|
+    @bot.servers.each { |_, server|
+      setup_server(server)
+    }
+    @bot.set_user_permission(SCHWERN_UID, 3)
+  }
 
-BOT = Discordrb::Commands::CommandBot.new token: ARGV.first, client_id: ARGV[1], prefix: '!', advanced_functionality: true
+  @bot.server_create do |event| 
+    event.server.member(event.BOT.profile.id).nick = "🔗"
+    event.server.owner.pm(OWNER_PM_MESSAGE)
+    setup_server(event.server)
+  end
+  
+  # VOICE-CHANNEL CREATED
+  @bot.channel_create(type: 2) do |event|
+    associate(event.channel)
+  end
 
-BOT.ready { |event| BOT.servers.each { |_, server| setup_server(server) }; BOT.set_user_permission(152621041976344577, 3) }
+  # VOICE-CHANNEL DELETED
+  @bot.channel_delete(type: 2) do |event|
+    event.server.text_channels.select { |tc| tc.id == @associations[event.id] }.map(&:delete)
+    trim_associations
+  end
 
-BOT.server_create do |event| 
-  event.server.member(event.BOT.profile.id).nick = "🔗"
-  event.server.owner.pm("Thank you for using **Conexus**!\nTo change the name of created associated text-channels, type **IN THE SERVER**: `set-name 'new-name-here'`")
-  setup_server(event.server)
+  @bot.voice_state_update do |event|
+    #old = simplify_voice_states(OLD_VOICE_STATES[event.server.id])
+    #current = simplify_voice_states(event.server.voice_states)
+    member = event.user.on(event.server)
+
+    if event.old_channel != event.channel #current[member.id] != old[member.id]
+      # Something has happened
+      handle_user_change(:leave, event.old_channel, member) unless event.old_channel.nil?
+      handle_user_change(:join, event.channel, member) unless event.channel.nil?
+    end
+  end
+
+  @bot.command(:creator, description: 'Open console.', permission_level: 3) do |event|
+    binding.pry
+
+    nil
+  end
+
+  @bot.command(:conexus, description: 'Set the name of the text-channels created for each voice-channel.', usage: '`!conexus "new-name"`', min_args: 1, max_args: 1, permission_level: 2) do |event, new_name|
+    new_name.downcase!
+    new_name.strip!
+    new_name.gsub!(/\s+/, '-')
+    new_name.gsub!(/[^a-zA-Z0-9_-]/, '')
+    new_name = new_name[0..30]
+
+    # Make sure channel doesn't already exist
+    return event.user.pm "Invalid name! `##{new_name}` is already used on the server." unless event.server.text_channels.find { |tc| tc.name == new_name }.nil?
+
+    old_name = @server_namings[event.server]
+    @server_namings[event.server.id] = new_name
+    save_local_files
+
+    # Rename all the old channels to the new name
+    event.server.text_channels.select { |tc| tc.name == old_name }.each do |tc|
+      tc.name = new_name
+    end
+
+    event.user.pm "Set text-channel name to `##{new_name}`."
+    nil
+  end
+
+  @bot.command(:rename, description: 'Set the name of **ONE** text-channel created for a voice-channel.', usage: '`!rename "new-name"` in the special text-channel you want to rename', min_args: 1, max_args: 1, permission_level: 2) do |event, new_name|
+    new_name.downcase!
+    new_name.strip!
+    new_name.gsub!(/\s+/, '-')
+    new_name.gsub!(/[^a-zA-Z0-9_-]/, '')
+    new_name = new_name[0..30]
+
+    ids = @associations.values
+
+    # Make sure channel doesn't already exist
+    return event.user.pm "Invalid name! `##{new_name}` is already used on the server." unless event.server.text_channels.find { |tc| tc.name == new_name && !ids.include?(tc.id) }.nil?
+
+    # Make sure is associated channel
+    return event.channel.send_message('You must use this in the special text-channel!') unless ids.include?(event.channel.id)
+
+    # Rename all the old channels to the new name
+    event.channel.name = new_name
+
+    'Renamed channel!'
+  end
+  
+  #BOT.invisible
+  puts "Oauth url: #{@bot.invite_url}+&permissions=8"
+
+  @bot.run :async
+  @bot.dnd
+  @bot.profile.name = 'conexus'
+  @bot.sync
+end
+
+def setup_local_files
+  FileUtils.touch(ASSOCIATIONS_FILE)
+  @associations = YAML.load_file(ASSOCIATIONS_FILE) || {}
+
+  FileUtils.touch(SERVER_NAMINGS_FILE)
+  @server_namings = YAML.load_file(SERVER_NAMINGS_FILE) || {}
+  @server_namings.default = 'voice-channel'
+  
+  return
+end
+
+def setup_text_permissions
+  @text_perms = Discordrb::Permissions.new
+  @text_perms.can_read_message_history = true
+  @text_perms.can_read_messages = true
+  @text_perms.can_send_messages = true
 end
 
 def setup_server(server)
   puts "Setting up [#{server.name}]"
+  setup_local_files
+  setup_text_permissions
   puts 'Trimming associations'
   trim_associations
   puts 'Cleaning up after restart'
-  server.text_channels.select { |tc| tc.name == SERVER_NAMINGS[server.id] }.each do |tc|
-    unless ASSOCIATIONS.values.include?(tc.id)
+  server.text_channels.select { |tc| tc.name == @server_namings[server.id] }.each do |tc|
+    unless @associations.values.include?(tc.id)
       tc.delete
       next
     end
-    vc = server.voice_channels.find { |vc| vc.id == ASSOCIATIONS.key(tc) }
+    vc = server.voice_channels.find { |vc| vc.id == @associations.key(tc) }
     tc.users.select { |u| !vc.users.include?(u) }.each do |u|
       tc.define_overwrite(u, 0, 0)
     end
@@ -62,8 +158,7 @@ def setup_server(server)
 
   server.voice_channels.each { |vc| associate(vc) }
 
-  OLD_VOICE_STATES[server.id] = server.voice_states.clone
-  BOT.set_user_permission(server.owner.id, 2)
+  @bot.set_user_permission(server.owner.id, 2)
   puts "Done\n"
 end
 
@@ -75,10 +170,14 @@ def simplify_voice_states(voice_states)
 end
 
 def trim_associations
-  ids = BOT.servers.map { |_, s| s.voice_channels.map { |vc| vc.id } }.flatten
-  ASSOCIATIONS.delete_if { |vc_id, tc_id| !ids.include?(vc_id) }
+  ids = @bot.servers.map { |_, s| s.voice_channels.map { |vc| vc.id } }.flatten
+  @associations.delete_if { |vc_id, _| !ids.include?(vc_id) }
 
-  save
+  save_local_files
+end
+
+def default_text_channel_name(voice_channel_name)
+  voice_channel_name.downcase.strip.gsub(/\s+/, '-') + "-text"
 end
 
 def associate(voice_channel)
@@ -86,20 +185,21 @@ def associate(voice_channel)
   return if voice_channel == server.afk_channel # No need for AFK channel to have associated text-channel
 
   puts "Associating '#{voice_channel.name} / #{server.name}'"
-  text_channel = server.text_channels.find { |tc| tc.id == ASSOCIATIONS[voice_channel.id] }
+  text_channel = server.text_channels.find { |tc| tc.id == @associations[voice_channel.id] }
 
   if text_channel.nil?
     puts "Not found... creating..."
-    text_channel = server.create_channel(SERVER_NAMINGS[server.id], 0) # Creates a matching text-channel called 'voice-channel'
+    @server_namings[server.id] = default_text_channel_name(voice_channel.name)
+    text_channel = server.create_channel(@server_namings[server.id], 0) # Creates a matching text-channel called 'voice-channel'
     text_channel.topic = "Private chat for all those in the voice-channel [**#{voice_channel.name}**]."
     
     voice_channel.users.each do |u|
-      text_channel.define_overwrite(u, TEXT_PERMS, 0)
+      text_channel.define_overwrite(u, @text_perms, 0)
     end
 
-    text_channel.define_overwrite(voice_channel.server.roles.find { |r| r.id == voice_channel.server.id }, 0, TEXT_PERMS) # Set default perms as invisible
-    ASSOCIATIONS[voice_channel.id] = text_channel.id # Associate the two 
-    save
+    text_channel.define_overwrite(voice_channel.server.roles.find { |r| r.id == voice_channel.server.id }, 0, @text_perms) # Set default perms as invisible
+    @associations[voice_channel.id] = text_channel.id # Associate the two 
+    save_local_files
   end
 
   text_channel
@@ -114,97 +214,16 @@ def handle_user_change(action, voice_channel, user)
 
   if action == :join
     text_channel.send_message("**#{user.display_name}** joined the voice-channel.")
-    text_channel.define_overwrite(user, TEXT_PERMS, 0)
+    text_channel.define_overwrite(user, @text_perms, 0)
   else
     text_channel.send_message("**#{user.display_name}** left the voice-channel.")
     text_channel.define_overwrite(user, 0, 0)
   end
 end
 
-# VOICE-CHANNEL CREATED
-BOT.channel_create(type: 2) do |event|
-  associate(event.channel)
+def save_local_files
+  File.open(ASSOCIATIONS_FILE, 'w') {|f| f.write @associations.to_yaml }
+  File.open(SERVER_NAMINGS_FILE, 'w') {|f| f.write @server_namings.to_yaml }
 end
 
-# VOICE-CHANNEL DELETED
-BOT.channel_delete(type: 2) do |event|
-  event.server.text_channels.select { |tc| tc.id == ASSOCIATIONS[event.id] }.map(&:delete)
-  trim_associations
-end
-
-BOT.voice_state_update do |event|
-  #old = simplify_voice_states(OLD_VOICE_STATES[event.server.id])
-  #current = simplify_voice_states(event.server.voice_states)
-  member = event.user.on(event.server)
-
-  if event.old_channel != event.channel #current[member.id] != old[member.id]
-    # Something has happened
-    handle_user_change(:leave, event.old_channel, member) unless event.old_channel.nil?
-    handle_user_change(:join, event.channel, member) unless event.channel.nil?
-
-    OLD_VOICE_STATES[event.server.id] = event.server.voice_states.clone
-  end
-end
-
-BOT.command(:creator, description: 'Open console.', permission_level: 3) do |event|
-  binding.pry
-
-  nil
-end
-
-BOT.command(:conexus, description: 'Set the name of the text-channels created for each voice-channel.', usage: '`!conexus "new-name"`', min_args: 1, max_args: 1, permission_level: 2) do |event, new_name|
-  new_name.downcase!
-  new_name.strip!
-  new_name.gsub!(/\s+/, '-')
-  new_name.gsub!(/[^a-zA-Z0-9_-]/, '')
-  new_name = new_name[0..30]
-
-  # Make sure channel doesn't already exist
-  return event.user.pm "Invalid name! `##{new_name}` is already used on the server." unless event.server.text_channels.find { |tc| tc.name == new_name }.nil?
-
-  old_name = SERVER_NAMINGS[event.server]
-  SERVER_NAMINGS[event.server.id] = new_name
-  save
-
-  # Rename all the old channels to the new name
-  event.server.text_channels.select { |tc| tc.name == old_name }.each do |tc|
-    tc.name = new_name
-  end
-
-  event.user.pm "Set text-channel name to `##{new_name}`."
-  nil
-end
-
-BOT.command(:rename, description: 'Set the name of **ONE** text-channel created for a voice-channel.', usage: '`!rename "new-name"` in the special text-channel you want to rename', min_args: 1, max_args: 1, permission_level: 2) do |event, new_name|
-  new_name.downcase!
-  new_name.strip!
-  new_name.gsub!(/\s+/, '-')
-  new_name.gsub!(/[^a-zA-Z0-9_-]/, '')
-  new_name = new_name[0..30]
-
-  ids = ASSOCIATIONS.values
-
-  # Make sure channel doesn't already exist
-  return event.user.pm "Invalid name! `##{new_name}` is already used on the server." unless event.server.text_channels.find { |tc| tc.name == new_name && !ids.include?(tc.id) }.nil?
-
-  # Make sure is associated channel
-  return event.channel.send_message('You must use this in the special text-channel!') unless ids.include?(event.channel.id)
-
-  # Rename all the old channels to the new name
-  event.channel.name = new_name
-
-  'Renamed channel!'
-end
-
-def save
-  File.open('associations.yaml', 'w') {|f| f.write ASSOCIATIONS.to_yaml }
-  File.open('server_namings.yaml', 'w') {|f| f.write SERVER_NAMINGS.to_yaml }
-end
-
-#BOT.invisible
-puts "Oauth url: #{BOT.invite_url}+&permissions=8"
-
-BOT.run :async
-BOT.dnd
-BOT.profile.name = 'conexus'
-BOT.sync
+run
