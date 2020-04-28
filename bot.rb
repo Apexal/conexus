@@ -20,12 +20,12 @@ OWNER_PM_MESSAGE = <<~MESSAGE.freeze
 MESSAGE
 
 module MoreStrings
-  refine String do    
+  refine String do
     def blank?
       empty? || /\A[[:space:]]*\z/.match?(self)
     end
   end
-  
+
   refine NilClass do
     def blank?
       true
@@ -39,14 +39,14 @@ def check_args
   if !ARGV.empty?
     puts <<~USAGE
       Usage: ruby bot.rb
-      
+
       Environment variables:
         CONEXUS_TOKEN - Your Discord API token
         CONEXUS_CLIENT_ID - Your Discord API client ID
     USAGE
     exit
   end
-  
+
   REQUIRED_ENVS.each do |name|
     raise "Environment variable #{name} not set" if ENV[name].blank?
   end
@@ -54,7 +54,7 @@ end
 
 def run
   check_args
-  
+
   @bot = Discordrb::Commands::CommandBot.new(
     token: ENV["CONEXUS_TOKEN"],
     client_id: ENV["CONEXUS_CLIENT_ID"],
@@ -72,12 +72,12 @@ def run
     end
   end
 
-  @bot.server_create do |event| 
+  @bot.server_create do |event|
     event.server.member(event.BOT.profile.id).nick = "🔗"
     event.server.owner.pm(OWNER_PM_MESSAGE)
     setup_server(event.server)
   end
-  
+
   # VOICE-CHANNEL CREATED
   @bot.channel_create(type: 2) do |event|
     associate(event.channel)
@@ -168,7 +168,7 @@ def run
 
     'Renamed channel!'
   end
-  
+
   # BOT.invisible
   puts "Oauth url: #{@bot.invite_url}+&permissions=8"
 
@@ -185,10 +185,10 @@ def setup_local_files
   FileUtils.touch(SERVER_NAMINGS_FILE)
   @server_namings = YAML.load_file(SERVER_NAMINGS_FILE) || {}
   @server_namings.default = 'voice-channel'
-  
+
   FileUtils.touch(USER_PERMISSIONS_FILE)
   @user_permissions = YAML.load_file(USER_PERMISSIONS_FILE) || {}
-  
+
   return
 end
 
@@ -226,7 +226,7 @@ end
 def simplify_voice_states(voice_states)
   clone = voice_states.clone
   clone.each { |user_id, state| clone[user_id] = state.voice_channel }
-  
+
   return clone
 end
 
@@ -260,7 +260,7 @@ def associate(voice_channel)
     # Creates a matching text-channel called 'voice-channel'
     text_channel = server.create_channel(@server_namings[server.id], 0)
     text_channel.topic = "Private chat for all in [**#{voice_channel.name}**]."
-    
+
     voice_channel.users.each do |u|
       text_channel.define_overwrite(u, @text_perms, 0)
     end
