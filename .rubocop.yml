@@ -25,6 +25,13 @@ Layout/MultilineArrayBraceLayout:
 Layout/MultilineMethodCallBraceLayout:
   EnforcedStyle: 'new_line'
 
+# good
+# foo.bar
+#   .this
+#   .that
+Layout/MultilineMethodCallIndentation:
+  Enabled: false
+
 # We have widescreens.
 Layout/LineLength:
   Max: 100

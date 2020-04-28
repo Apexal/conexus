@@ -231,7 +231,11 @@ def simplify_voice_states(voice_states)
 end
 
 def trim_associations
-  ids = @bot.servers.map { |_, s| s.voice_channels.map(&:id) }.flatten
+  ids = @bot.servers
+    .values
+    .map(&:voice_channels)
+    .flatten
+    .map(&:id)
   @associations.delete_if { |vc_id, _| !ids.include?(vc_id) }
 
   save_local_files
