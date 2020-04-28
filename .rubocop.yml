@@ -1,0 +1,45 @@
+AllCops:
+  TargetRubyVersion: 2.6
+
+Layout/EmptyLinesAroundAccessModifier:
+  EnforcedStyle: 'around'
+
+Layout/CaseIndentation:
+  EnforcedStyle: 'end'
+
+# Useful to separate conceptual expressions.
+Layout/SpaceInsideParens:
+  Enabled: false
+Layout/SpaceInsideBlockBraces:
+  Enabled: false
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+Layout/TrailingEmptyLines:
+  Enabled: false
+
+# Has no effect on anything.
+Layout/TrailingWhitespace:
+  Enabled: false
+
+# Turn this on if we upgrade to Ruby 3.0.
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# These are handy for clarity over large text blocks, not just for
+# avoiding escaping quotes.
+Style/RedundantPercentQ:
+  Enabled: false
+
+# It's important to know if it's really returning a value,
+# or if it just happens to be the last evaluated expression.
+Style/RedundantReturn:
+  Enabled: false
+
+# Doesn't hurt to have them, and it can add grammatical clarity.
+Style/Semicolon:
+  Enabled: false
+
+# This is a place where inconsistency is fine.
+# Editor coloring will catch a mistake.
+Style/StringLiterals:
+  Enabled: false
