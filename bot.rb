@@ -1,5 +1,3 @@
-SCHWERN_UID = 288_032_693_164_310_528
-
 require 'rubygems'
 
 require 'bundler/setup'
@@ -12,6 +10,7 @@ require 'pry'
 
 ASSOCIATIONS_FILE = 'local/associations.yaml'.freeze
 SERVER_NAMINGS_FILE = 'local/server_namings.yaml'.freeze
+USER_PERMISSIONS_FILE = 'local/user_permissions.yaml'.freeze
 
 REQUIRED_ENVS = %w[CONEXUS_TOKEN CONEXUS_CLIENT_ID].freeze
 
@@ -67,7 +66,10 @@ def run
     @bot.servers.each do |_, server|
       setup_server(server)
     end
-    @bot.set_user_permission(SCHWERN_UID, 3)
+    @user_permissions.each do |uid, permission|
+      puts "Giving #{uid} permission #{permission}"
+      @bot.set_user_permission(uid, permission)
+    end
   end
 
   @bot.server_create do |event| 
@@ -184,6 +186,9 @@ def setup_local_files
   @server_namings = YAML.load_file(SERVER_NAMINGS_FILE) || {}
   @server_namings.default = 'voice-channel'
   
+  FileUtils.touch(USER_PERMISSIONS_FILE)
+  @user_permissions = YAML.load_file(USER_PERMISSIONS_FILE) || {}
+  
   return
 end
 
@@ -287,6 +292,7 @@ end
 def save_local_files
   File.open(ASSOCIATIONS_FILE, 'w') {|f| f.write @associations.to_yaml }
   File.open(SERVER_NAMINGS_FILE, 'w') {|f| f.write @server_namings.to_yaml }
+  File.open(USER_PERMISSIONS_FILE, 'w') { |f| f.write @user_permissions.to_yaml }
 end
 
 run
