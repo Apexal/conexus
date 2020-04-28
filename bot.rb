@@ -1,9 +1,5 @@
 SCHWERN_UID = 288_032_693_164_310_528
 
-if ARGV.length != 2
-  puts 'Usage: ruby bot.rb <token> <client_id>'
-  exit
-end
 require 'rubygems'
 
 require 'bundler/setup'
@@ -17,14 +13,54 @@ require 'pry'
 ASSOCIATIONS_FILE = 'local/associations.yaml'.freeze
 SERVER_NAMINGS_FILE = 'local/server_namings.yaml'.freeze
 
+REQUIRED_ENVS = %w[CONEXUS_TOKEN CONEXUS_CLIENT_ID].freeze
+
 OWNER_PM_MESSAGE = <<~MESSAGE.freeze
   Thank you for using **Conexus**!
   To change the name of associated text-channels, type **IN THE SERVER**: `set-name 'new-name-here'`
 MESSAGE
 
+module MoreStrings
+  refine String do    
+    def blank?
+      empty? || /\A[[:space:]]*\z/.match?(self)
+    end
+  end
+  
+  refine NilClass do
+    def blank?
+      true
+    end
+  end
+end
+
+using MoreStrings
+
+def check_args
+  if !ARGV.empty?
+    puts <<~USAGE
+      Usage: ruby bot.rb
+      
+      Environment variables:
+        CONEXUS_TOKEN - Your Discord API token
+        CONEXUS_CLIENT_ID - Your Discord API client ID
+    USAGE
+    exit
+  end
+  
+  REQUIRED_ENVS.each do |name|
+    raise "Environment variable #{name} not set" if ENV[name].blank?
+  end
+end
+
 def run
+  check_args
+  
   @bot = Discordrb::Commands::CommandBot.new(
-    token: ARGV.first, client_id: ARGV[1], prefix: '!', advanced_functionality: true
+    token: ENV["CONEXUS_TOKEN"],
+    client_id: ENV["CONEXUS_CLIENT_ID"],
+    prefix: '!',
+    advanced_functionality: true
   )
 
   @bot.ready do |_|

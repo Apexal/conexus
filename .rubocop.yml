@@ -72,6 +72,10 @@ Style/HashTransformKeys:
 Style/HashTransformValues:
   Enabled: true
 
+# `unless cond` confuses a lot of people. Don't enforce it.
+Style/NegatedIf:
+  Enabled: false
+
 # These are handy for clarity over large text blocks, not just for
 # avoiding escaping quotes.
 Style/RedundantPercentQ:
