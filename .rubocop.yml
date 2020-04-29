@@ -1,0 +1,103 @@
+AllCops:
+  TargetRubyVersion: 2.6
+
+# It's very common to do this.
+#
+# f.input :thing,
+#   key: value,
+#   this: that
+Layout/ArgumentAlignment:
+  Enabled: false
+
+Layout/EmptyLinesAroundAccessModifier:
+  EnforcedStyle: 'around'
+
+Layout/CaseIndentation:
+  EnforcedStyle: 'end'
+
+# Makes the "block" of modified methods obvious. We prefer inline modifiers.
+Layout/IndentationConsistency:
+  EnforcedStyle: 'indented_internal_methods'
+
+Layout/MultilineArrayBraceLayout:
+  EnforcedStyle: 'new_line'
+
+Layout/MultilineMethodCallBraceLayout:
+  EnforcedStyle: 'new_line'
+
+# good
+# foo.bar
+#   .this
+#   .that
+Layout/MultilineMethodCallIndentation:
+  Enabled: false
+
+# We have widescreens.
+Layout/LineLength:
+  Max: 100
+
+Layout/SpaceAroundMethodCallOperator:
+  Enabled: true
+
+# Useful to separate conceptual expressions.
+Layout/SpaceInsideParens:
+  Enabled: false
+Layout/SpaceInsideBlockBraces:
+  Enabled: false
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+Layout/TrailingEmptyLines:
+  Enabled: false
+
+Lint/RaiseException:
+  Enabled: true
+
+Lint/StructNewOverride:
+  Enabled: true
+
+# Has no effect on anything.
+Layout/TrailingWhitespace:
+  Enabled: false
+
+Metrics/MethodLength:
+  # The default of 10 is too tight.
+  Max: 30
+
+Style/ExponentialNotation:
+  Enabled: true
+
+# Turn this on if we upgrade to Ruby 3.0.
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true
+
+# `unless cond` confuses a lot of people. Don't enforce it.
+Style/NegatedIf:
+  Enabled: false
+
+# These are handy for clarity over large text blocks, not just for
+# avoiding escaping quotes.
+Style/RedundantPercentQ:
+  Enabled: false
+
+# It's important to know if it's really returning a value,
+# or if it just happens to be the last evaluated expression.
+Style/RedundantReturn:
+  Enabled: false
+
+# Doesn't hurt to have them, and it can add grammatical clarity.
+Style/Semicolon:
+  Enabled: false
+
+# This is a place where inconsistency is fine.
+# Editor coloring will catch a mistake.
+Style/StringLiterals:
+  Enabled: false
