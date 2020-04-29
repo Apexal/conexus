@@ -14,7 +14,7 @@ GEM
     domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
     event_emitter (0.2.5)
-    ffi (1.9.18)
+    ffi (1.12.2)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
     method_source (1.0.0)
