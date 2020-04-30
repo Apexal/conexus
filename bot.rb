@@ -171,6 +171,15 @@ def run
     'Renamed channel!'
   end
 
+  @bot.command(:shutdown,
+    descripton: 'Shut me down',
+    permission_level: 3
+  ) do |event|
+    @bot.send_message(event.channel.id, 'Bot is shutting down. BEEeeewwwwww.......boop.')
+    @bot.stop
+    exit
+  end
+
   # BOT.invisible
   puts "Oauth url: #{@bot.invite_url}+&permissions=8"
 
