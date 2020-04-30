@@ -3,24 +3,26 @@ GEM
   specs:
     byebug (11.1.3)
     coderay (1.1.2)
-    discordrb (3.2.1)
-      discordrb-webhooks (~> 3.2.0.1)
+    discordrb (3.3.0)
+      discordrb-webhooks (~> 3.3.0)
+      ffi (>= 1.9.24)
       opus-ruby
       rbnacl (~> 3.4.0)
-      rest-client
+      rest-client (>= 2.1.0.rc1)
       websocket-client-simple (>= 0.3.0)
-    discordrb-webhooks (3.2.0.1)
-      rest-client
-    domain_name (0.5.20170404)
+    discordrb-webhooks (3.3.0)
+      rest-client (>= 2.1.0.rc1)
+    domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
-    event_emitter (0.2.5)
-    ffi (1.9.18)
+    event_emitter (0.2.6)
+    ffi (1.12.2)
+    http-accept (1.7.0)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
     method_source (1.0.0)
-    mime-types (3.1)
+    mime-types (3.3.1)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2016.0521)
+    mime-types-data (3.2020.0425)
     netrc (0.11.0)
     opus-ruby (1.0.1)
       ffi
@@ -32,14 +34,15 @@ GEM
       pry (~> 0.13.0)
     rbnacl (3.4.0)
       ffi
-    rest-client (2.0.1)
+    rest-client (2.1.0)
+      http-accept (>= 1.7.0, < 2.0)
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 4.0)
       netrc (~> 0.8)
     unf (0.1.4)
       unf_ext
-    unf_ext (0.0.7.4)
-    websocket (1.2.4)
+    unf_ext (0.0.7.7)
+    websocket (1.2.8)
     websocket-client-simple (0.3.0)
       event_emitter
       websocket
