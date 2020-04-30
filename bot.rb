@@ -63,6 +63,8 @@ def run
   )
 
   @bot.ready do |_|
+    @bot.dnd
+    @bot.profile.name = 'conexus'
     @bot.servers.each do |_, server|
       setup_server(server)
     end
@@ -172,10 +174,7 @@ def run
   # BOT.invisible
   puts "Oauth url: #{@bot.invite_url}+&permissions=8"
 
-  @bot.run :async
-  @bot.dnd
-  @bot.profile.name = 'conexus'
-  @bot.sync
+  @bot.run
 end
 
 def setup_local_files
