@@ -175,6 +175,9 @@ def run
   puts "Oauth url: #{@bot.invite_url}+&permissions=8"
 
   @bot.run
+rescue Interrupt
+  puts "Stopping."
+  @bot.stop
 end
 
 def setup_local_files
