@@ -63,6 +63,8 @@ def run
   )
 
   @bot.ready do |_|
+    @bot.dnd
+    @bot.profile.name = 'conexus'
     @bot.servers.each do |_, server|
       setup_server(server)
     end
@@ -169,13 +171,23 @@ def run
     'Renamed channel!'
   end
 
+  @bot.command(:shutdown,
+    descripton: 'Shut me down',
+    permission_level: 3
+  ) do |event|
+    @bot.send_message(event.channel.id, 'Bot is shutting down. BEEeeewwwwww.......boop.')
+    @bot.stop
+    exit
+  end
+
   # BOT.invisible
   puts "Oauth url: #{@bot.invite_url}+&permissions=8"
 
-  @bot.run :async
-  @bot.dnd
-  @bot.profile.name = 'conexus'
-  @bot.sync
+  at_exit {
+    puts "Stopping."
+    @bot.stop
+  }
+  @bot.run
 end
 
 def setup_local_files
