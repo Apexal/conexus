@@ -1,3 +1,9 @@
+# NO LONGER SUPPORTED
+
+Please see [issue #17](https://github.com/Apexal/conexus/issues/17) for details. 
+
+---
+
 # Conexus 🔗
 ~ A simple Discord bot to link voice channels to private text channels.
 
